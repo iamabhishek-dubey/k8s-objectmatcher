@@ -237,6 +237,9 @@ func deleteVolumeClaimTemplateFields(obj []byte) ([]byte, error) {
 							vct["status"] = map[string]string{
 								"phase": "Pending",
 							}
+							if vctSpec, ok := vct["spec"].(map[string]interface{}); ok {
+								delete(vctSpec, "volumeClaimTemplates")
+							}
 						}
 					}
 				}
