@@ -1,4 +1,4 @@
-module github.com/banzaicloud/k8s-objectmatcher
+module github.com/iamabhishek-dubey/k8s-objectmatcher
 
 go 1.15
 
