@@ -41,6 +41,22 @@ func IgnoreStatusFields() CalculateOption {
 	}
 }
 
+func IgnorePersistenVolumeFields() CalculateOption {
+	return func(current, modified []byte) ([]byte, []byte, error) {
+		current, err := deletePersistentVolumeFields(current)
+		if err != nil {
+			return []byte{}, []byte{}, errors.Wrap(err, "could not delete status field from current byte sequence")
+		}
+
+		modified, err = deletePersistentVolumeFields(modified)
+		if err != nil {
+			return []byte{}, []byte{}, errors.Wrap(err, "could not delete status field from modified byte sequence")
+		}
+
+		return current, modified, nil
+	}
+}
+
 func IgnoreField(field string) CalculateOption {
 	return func(current, modified []byte) ([]byte, []byte, error) {
 		current, err := deleteDataField(current, field)
@@ -211,6 +227,22 @@ func deleteStatusField(obj []byte) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "could not unmarshal byte sequence")
 	}
 	delete(objectMap, "status")
+	obj, err = json.ConfigCompatibleWithStandardLibrary.Marshal(objectMap)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "could not marshal byte sequence")
+	}
+
+	return obj, nil
+}
+
+func deletePersistentVolumeFields(obj []byte) ([]byte, error) {
+	var objectMap map[string]interface{}
+	err := json.Unmarshal(obj, &objectMap)
+	if err != nil {
+		return []byte{}, errors.Wrap(err, "could not unmarshal byte sequence")
+	}
+	pvcData, _ := objectMap["spec"].(map[string]interface{})
+	delete(pvcData, "volumeClaimTemplates")
 	obj, err = json.ConfigCompatibleWithStandardLibrary.Marshal(objectMap)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "could not marshal byte sequence")
